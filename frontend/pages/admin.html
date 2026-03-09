@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>АСБН - Администрирование</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container navbar-content">
+            <div class="navbar-brand">АСБН | Админ</div>
+            <div class="navbar-menu" id="user-navbar">
+                <a href="monitoring.html">Мониторинг</a>
+                <a href="forecast.html">Прогноз</a>
+                <a href="balancing.html">Балансировка</a>
+                <a href="notifications.html">Уведомления</a>
+                <a href="reports.html">Отчёты</a>
+                <a href="admin.html" class="admin-only">Админ</a>
+                <span id="user-name"></span>
+                <a href="#" onclick="logout()">Выход</a>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container mt-2">
+        <div class="grid grid-2">
+            <div class="card">
+                <div class="card-header">👥 Пользователи</div>
+                <button class="btn btn-primary mb-2" onclick="showCreateUser()">+ Добавить</button>
+                <table class="table" id="users-table">
+                    <thead>
+                        <tr>
+                            <th>Логин</th>
+                            <th>Email</th>
+                            <th>Роль</th>
+                            <th>Статус</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Пользователи будут загружены через JS -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">🖥 Статус системы</div>
+                <div id="system-status">
+                    <!-- Статус будет загружен через JS -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-2">
+            <div class="card-header">⚙️ Настройка порогов и правил</div>
+            <div class="grid grid-3">
+                <div class="form-group">
+                    <label>Порог предупреждения (%)</label>
+                    <input type="number" id="threshold-warning" class="form-control" value="85">
+                </div>
+                <div class="form-group">
+                    <label>Порог аварии (%)</label>
+                    <input type="number" id="threshold-emergency" class="form-control" value="95">
+                </div>
+                <div class="form-group">
+                    <label>Отклонение напряжения (%)</label>
+                    <input type="number" id="threshold-voltage" class="form-control" value="5">
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="saveThresholds()">Сохранить</button>
+        </div>
+        
+        <div class="card mt-2">
+            <div class="card-header">📋 Журнал управляющих команд (Рис. 8)</div>
+            <table class="table" id="commands-log-table">
+                <thead>
+                    <tr>
+                        <th>Время</th>
+                        <th>Тип</th>
+                        <th>Параметры</th>
+                        <th>Статус</th>
+                        <th>Оператор</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Команды будут загружены через JS -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="card mt-2">
+            <div class="card-header">📝 Системные логи</div>
+            <div style="background: #1a202c; color: #48bb78; padding: 15px; border-radius: 4px; font-family: monospace; font-size: 12px; max-height: 300px; overflow-y: auto;" id="system-logs">
+                <!-- Логи будут загружены через JS -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Модальное окно создания пользователя -->
+    <div id="create-user-modal" class="hidden" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;">
+        <div class="card" style="width: 400px; max-width: 90%;">
+            <div class="card-header">Создание пользователя</div>
+            <div class="form-group">
+                <label>Логин</label>
+                <input type="text" id="new-login" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="new-email" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>Пароль</label>
+                <input type="password" id="new-password" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>Роль</label>
+                <select id="new-role" class="form-control">
+                    <option value="analyst">Аналитик</option>
+                    <option value="dispatcher">Диспетчер</option>
+                    <option value="admin">Администратор</option>
+                </select>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-primary" onclick="createUser()">Создать</button>
+                <button class="btn btn-danger" onclick="closeCreateUser()">Отмена</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/admin.js"></script>
+    <script>
+        if (!checkAuth()) window.location.href = '../login.html';
+        if (!hasRole('admin')) {
+            alert('Доступ только для администраторов');
+            window.location.href = 'monitoring.html';
+        }
+        initNavbar();
+        loadAdminData();
+    </script>
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>АСБН - Отчёты</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .report-card {
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            background: white;
+        }
+        .report-card:hover {
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container navbar-content">
+            <div class="navbar-brand">АСБН | Отчёты</div>
+            <div class="navbar-menu" id="user-navbar">
+                <a href="monitoring.html">Мониторинг</a>
+                <a href="forecast.html">Прогноз</a>
+                <a href="balancing.html">Балансировка</a>
+                <a href="notifications.html">Уведомления</a>
+                <a href="reports.html">Отчёты</a>
+                <a href="admin.html" class="admin-only">Админ</a>
+                <span id="user-name"></span>
+                <a href="#" onclick="logout()">Выход</a>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container mt-2">
+        <div class="card">
+            <div class="card-header">📊 Генерация отчётов</div>
+            
+            <div class="form-group">
+                <label>Тип отчёта</label>
+                <select id="report-type" class="form-control">
+                    <option value="state">Состояние нагрузки</option>
+                    <option value="distribution">Распределение нагрузки</option>
+                    <option value="forecast">Прогноз нагрузки</option>
+                </select>
+            </div>
+            
+            <div class="grid grid-2">
+                <div class="form-group">
+                    <label>Дата начала</label>
+                    <input type="datetime-local" id="start-date" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Дата окончания</label>
+                    <input type="datetime-local" id="end-date" class="form-control">
+                </div>
+            </div>
+            
+            <button class="btn btn-primary" onclick="generateReport()">Сгенерировать отчёт</button>
+            
+            <div id="report-result" class="alert alert-success mt-2 hidden"></div>
+        </div>
+        
+        <div class="card mt-2">
+            <div class="card-header">📁 Доступные отчёты</div>
+            <div class="grid grid-3" id="reports-list">
+                <div class="report-card">
+                    <h4>📈 Состояние нагрузки</h4>
+                    <p style="font-size: 13px; color: #718096;">Текущие и исторические значения нагрузки, аварийные события</p>
+                    <button class="btn btn-primary mt-2" onclick="quickReport('state')">Создать</button>
+                </div>
+                <div class="report-card">
+                    <h4>⚖️ Распределение нагрузки</h4>
+                    <p style="font-size: 13px; color: #718096;">Выполненные управляющие воздействия и их эффект</p>
+                    <button class="btn btn-primary mt-2" onclick="quickReport('distribution')">Создать</button>
+                </div>
+                <div class="report-card">
+                    <h4>📊 Прогноз нагрузки</h4>
+                    <p style="font-size: 13px; color: #718096;">Прогнозные значения и качество прогноза</p>
+                    <button class="btn btn-primary mt-2" onclick="quickReport('forecast')">Создать</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-2">
+            <div class="card-header">📋 Шаблоны отчётов</div>
+            <table class="table" id="templates-table">
+                <thead>
+                    <tr>
+                        <th>Название</th>
+                        <th>Тип</th>
+                        <th>Расписание</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Ежечасный отчёт по нагрузке</td>
+                        <td>state</td>
+                        <td>Каждый час</td>
+                        <td><button class="btn btn-warning">Скачать</button></td>
+                    </tr>
+                    <tr>
+                        <td>Дневной прогноз</td>
+                        <td>forecast</td>
+                        <td>Ежедневно</td>
+                        <td><button class="btn btn-warning">Скачать</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/reports.js"></script>
+    <script>
+        if (!checkAuth()) window.location.href = '../login.html';
+        initNavbar();
+        
+        // Установка дат по умолчанию
+        const now = new Date();
+        const hourAgo = new Date(now.getTime() - 3600000);
+        document.getElementById('start-date').value = hourAgo.toISOString().slice(0, 16);
+        document.getElementById('end-date').value = now.toISOString().slice(0, 16);
+    </script>
+</body>
+</html>
