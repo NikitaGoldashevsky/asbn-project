@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>АСБН - Балансировка</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .recommendation-card {
+            border-left: 4px solid #ecc94b;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .recommendation-card.urgent {
+            border-left-color: #f56565;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container navbar-content">
+            <div class="navbar-brand">АСБН | Балансировка</div>
+            <div class="navbar-menu" id="user-navbar">
+                <a href="monitoring.html">Мониторинг</a>
+                <a href="forecast.html">Прогноз</a>
+                <a href="balancing.html">Балансировка</a>
+                <a href="notifications.html">Уведомления</a>
+                <a href="reports.html">Отчёты</a>
+                <a href="admin.html" class="admin-only">Админ</a>
+                <span id="user-name"></span>
+                <a href="#" onclick="logout()">Выход</a>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container mt-2">
+        <div class="card">
+            <div class="card-header">⚖️ Рекомендации по балансировке</div>
+            
+            <div id="recommendations-container">
+                <!-- Рекомендации будут загружены через JS -->
+            </div>
+        </div>
+        
+        <div class="card mt-2">
+            <div class="card-header">📋 Журнал управляющих команд</div>
+            <table class="table" id="commands-table">
+                <thead>
+                    <tr>
+                        <th>Время</th>
+                        <th>Тип команды</th>
+                        <th>Параметры</th>
+                        <th>Статус</th>
+                        <th>Оператор</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Команды будут загружены через JS -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="card mt-2">
+            <div class="card-header">🧪 Режим симуляции</div>
+            <div class="form-group">
+                <label>Источник</label>
+                <select id="sim-source" class="form-control">
+                    <option value="1">ПС-1 Северная</option>
+                    <option value="2">ПС-2 Центральная</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Цель</label>
+                <select id="sim-target" class="form-control">
+                    <option value="3">ПС-3 Южная</option>
+                    <option value="4">ПС-4 Восточная</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Мощность перераспределения (МВт)</label>
+                <input type="number" id="sim-power" class="form-control" value="10">
+            </div>
+            <button class="btn btn-warning" onclick="runSimulation()">
+                Запустить симуляцию
+            </button>
+            <div id="simulation-result" class="alert alert-info mt-2 hidden"></div>
+        </div>
+    </div>
+    
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/balancing.js"></script>
+    <script>
+        if (!checkAuth()) window.location.href = '../login.html';
+        initNavbar();
+        loadRecommendations();
+        loadCommands();
+    </script>
+</body>
+</html>

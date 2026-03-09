@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>АСБН - Вход в систему</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 40px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .login-header h1 {
+            color: #2c5282;
+            font-size: 24px;
+        }
+        .login-header p {
+            color: #718096;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h1>АСБН</h1>
+            <p>Автоматизированная Система Балансировки Нагрузок</p>
+        </div>
+        
+        <div id="login-error" class="alert alert-error hidden"></div>
+        
+        <form id="login-form" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label for="login">Логин</label>
+                <input type="text" id="login" class="form-control" required 
+                       minlength="4" maxlength="20" pattern="[a-zA-Z0-9]+"
+                       placeholder="Введите логин">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Пароль</label>
+                <input type="password" id="password" class="form-control" required 
+                       minlength="8" maxlength="32"
+                       placeholder="Введите пароль">
+            </div>
+            
+            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                Войти в систему
+            </button>
+        </form>
+        
+        <div class="text-center mt-2">
+            <p>Нет учётной записи? <a href="register.html">Зарегистрироваться</a></p>
+        </div>
+        
+        <div class="mt-2" style="font-size: 12px; color: #718096;">
+            <p><strong>Тестовые учётные данные:</strong></p>
+            <p>admin / Admin123!</p>
+            <p>dispatcher1 / Disp123!</p>
+            <p>analyst1 / Anal123!</p>
+        </div>
+    </div>
+    
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        // Проверка - если уже авторизован, перенаправить
+        if (api.getToken()) {
+            window.location.href = 'pages/monitoring.html';
+        }
+    </script>
+</body>
+</html>
