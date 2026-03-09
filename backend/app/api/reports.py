@@ -7,10 +7,14 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 from backend.app.database import get_db
 from backend.app.models import Measurement, NetworkNode, Forecast
+from backend.app.schemas.report import ReportGenerate  # ← ДОБАВИТЬ ЭТУ СТРОКУ
 import csv
 import os
 
 router = APIRouter()
+
+# Создаём директорию для отчётов при старте
+os.makedirs("exports/reports", exist_ok=True)
 
 
 @router.get("/")
@@ -27,29 +31,28 @@ async def get_reports_list(db: Session = Depends(get_db)):
 
 @router.post("/generate")
 async def generate_report(
-    report_type: str,
-    start_date: datetime,
-    end_date: datetime,
-    node_ids: list = None,
+    report: ReportGenerate,  # ← Используем Pydantic модель
     db: Session = Depends(get_db)
 ):
     """Генерация отчёта (CSV)"""
-    if report_type not in ["state", "distribution", "forecast"]:
-        raise HTTPException(status_code=400, detail="Неверный тип отчёта")
-    
-    # Создаём директорию для экспорта
-    os.makedirs("exports/reports", exist_ok=True)
-    
-    filename = f"exports/reports/report_{report_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-    
     try:
+        if report.report_type not in ["state", "distribution", "forecast"]:
+            raise HTTPException(status_code=400, detail="Неверный тип отчёта")
+        
+        # Создаём директорию
+        os.makedirs("exports/reports", exist_ok=True)
+        
+        # Генерируем имя файла
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"exports/reports/report_{report.report_type}_{timestamp}.csv"
+        
         with open(filename, 'w', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
             
-            if report_type == "state":
+            if report.report_type == "state":
                 writer.writerow(["Узел", "Напряжение (кВ)", "Ток (А)", "Мощность (МВт)", "Статус", "Время"])
                 measurements = db.query(Measurement).filter(
-                    Measurement.timestamp.between(start_date, end_date)
+                    Measurement.timestamp.between(report.start_date, report.end_date)
                 ).limit(100).all()
                 for m in measurements:
                     node = db.query(NetworkNode).filter(NetworkNode.id == m.node_id).first()
@@ -60,10 +63,10 @@ async def generate_report(
                         m.timestamp
                     ])
             
-            elif report_type == "forecast":
+            elif report.report_type == "forecast":
                 writer.writerow(["Узел", "Время", "Прогноз (МВт)", "Нижняя граница", "Верхняя граница", "MAPE"])
                 forecasts = db.query(Forecast).filter(
-                    Forecast.timestamp.between(start_date, end_date)
+                    Forecast.timestamp.between(report.start_date, report.end_date)
                 ).limit(100).all()
                 for fc in forecasts:
                     node = db.query(NetworkNode).filter(NetworkNode.id == fc.node_id).first()
@@ -74,7 +77,7 @@ async def generate_report(
                         fc.mape_error
                     ])
             
-            elif report_type == "distribution":
+            elif report.report_type == "distribution":
                 writer.writerow(["Источник", "Цель", "Мощность (МВт)", "Статус", "Время"])
                 writer.writerow(["ПС-1", "ПС-2", "15.5", "Выполнено", datetime.now()])
                 writer.writerow(["ПС-2", "ПС-3", "10.2", "Выполнено", datetime.now()])
@@ -82,11 +85,12 @@ async def generate_report(
         return {
             "message": "Отчёт сгенерирован",
             "file_path": filename,
-            "report_type": report_type,
+            "report_type": report.report_type,
             "records": 100
         }
     
     except Exception as e:
+        print(f"❌ Ошибка генерации отчёта: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Ошибка генерации: {str(e)}")
 
 

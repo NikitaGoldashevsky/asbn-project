@@ -11,11 +11,11 @@ async function generateReport() {
     
     try {
         const result = await api.generateReport(type, start, end);
-        resultDiv.textContent = `✅ Отчёт сгенерирован: ${result.file_path || 'report_' + type + '.csv'}`;
+        resultDiv.textContent = `Отчёт сгенерирован: ${result.file_path || 'report_' + type + '.csv'}`;
         resultDiv.classList.remove('hidden');
     } catch (error) {
         // Для прототипа показываем успех
-        resultDiv.textContent = `✅ Отчёт сгенерирован: exports/reports/report_${type}.csv`;
+        resultDiv.textContent = `Отчёт сгенерирован: exports/reports/report_${type}.csv`;
         resultDiv.classList.remove('hidden');
     }
 }
