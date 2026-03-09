@@ -3,6 +3,8 @@
 Разработчик: Голдашевский Н.С., гр. 4331
 """
 import sys
+from datetime import timezone
+
 sys.path.append('.')
 
 from backend.app.database import engine, Base, SessionLocal
@@ -166,7 +168,7 @@ def create_historical_measurements():
                 continue
             
             # Генерируем 30 суток * 96 интервалов = 2880 измерений
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc).astimezone()
             base_power = node.nominal_power or 50.0
             
             for i in range(2880):

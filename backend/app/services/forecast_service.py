@@ -8,6 +8,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 from sklearn.linear_model import QuantileRegressor
 import logging
+from datetime import timezone
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +70,7 @@ class ForecastService:
             return self._generate_mock_forecast(node_id, horizon_hours, interval_minutes)
         
         # Генерация будущих timestamps
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc).astimezone()
         future_timestamps = [
             now + timedelta(minutes=interval_minutes * i)
             for i in range(int(horizon_hours * 60 / interval_minutes))
@@ -99,7 +100,7 @@ class ForecastService:
     
     def _generate_mock_forecast(self, node_id: int, horizon_hours: int, interval_minutes: int) -> dict:
         """Mock-прогноз если модель не обучена (для прототипа)"""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc).astimezone()
         forecasts = []
         base_load = 50 + node_id * 5
         
