@@ -7,16 +7,14 @@ app:
   debug: true
 
 database:
-  # Для прототипа используем SQLite
-  url: "sqlite:///./database/asbn.db"
-  # Для продакшена:
-  # url: "postgresql://user:password@localhost:5432/asbn"
+  # postgres:
+  url: "postgresql://postgres:postgres@localhost:5432/asbn"
   echo: false
 
 security:
   jwt_secret_key: "asbn-secret-key-change-in-production-2025"
   jwt_algorithm: "HS256"
-  access_token_expire_minutes: 30
+  access_token_expire_minutes: 30d
   password_hash_rounds: 12
 
 thresholds:

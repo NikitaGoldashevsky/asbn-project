@@ -1,5 +1,6 @@
 """
-Подключение к базе данных
+Подключение к базе данных PostgreSQL
+Разработчик: Голдашевский Н.С., гр. 4331
 """
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -9,7 +10,9 @@ from backend.app.core.config import config
 # Создание движка БД
 engine = create_engine(
     config.database_url,
-    connect_args={"check_same_thread": False}  # Только для SQLite
+    pool_pre_ping=True,  # Проверка соединения
+    pool_size=10,        # Пул соединений
+    max_overflow=20
 )
 
 # Сессия БД

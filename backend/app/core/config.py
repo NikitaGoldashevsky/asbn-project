@@ -45,7 +45,7 @@ class Config:
     
     @property
     def database_url(self) -> str:
-        return self.get('database.url', 'sqlite:///./database/asbn.db')
+        return self.get('database.url', 'postgresql://postgres:postgres@localhost:5432/asbn')
     
     @property
     def jwt_secret_key(self) -> str:

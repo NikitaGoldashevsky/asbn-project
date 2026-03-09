@@ -198,7 +198,7 @@ body {
 .navbar-menu a {
     color: white;
     text-decoration: none;
-    margin-left: 20px;
+    margin-left: 10px;
     padding: 5px 10px;
     border-radius: 4px;
     transition: background 0.3s;

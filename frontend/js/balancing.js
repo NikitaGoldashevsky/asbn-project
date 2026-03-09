@@ -4,13 +4,13 @@
  */
 
 async function loadRecommendations() {
+    const container = document.getElementById('recommendations-container');
+    
     try {
         const data = await api.getRecommendations();
         renderRecommendations(data.recommendations);
     } catch (error) {
         console.log('Ошибка загрузки рекомендаций:', error);
-        // Показываем сообщение вместо mock-данных
-        const container = document.getElementById('recommendations-container');
         container.innerHTML = '<div class="alert alert-info">Нет активных рекомендаций. Система продолжит мониторинг.</div>';
     }
 }
@@ -19,7 +19,7 @@ function renderRecommendations(recommendations) {
     const container = document.getElementById('recommendations-container');
     
     if (!recommendations || recommendations.length === 0) {
-        container.innerHTML = '<div class="alert alert-info">Нет активных рекомендаций</div>';
+        container.innerHTML = '<div class="alert alert-info">Нет активных рекомендаций. Система продолжит мониторинг.</div>';
         return;
     }
     
@@ -136,3 +136,10 @@ async function runSimulation() {
         resultDiv.classList.remove('hidden');
     }
 }
+
+setInterval(() => {
+    if (checkAuth()) {
+        loadRecommendations();
+        loadCommands();
+    }
+}, 10000);
