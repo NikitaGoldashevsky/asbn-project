@@ -105,6 +105,44 @@ def create_test_notifications():
     finally:
         db.close()
         
+def create_test_recommendations():
+    """Создание тестовых рекомендаций"""
+    from backend.app.models import BalancingRecommendation
+    from datetime import datetime, timedelta
+    
+    db = SessionLocal()
+    try:
+        existing = db.query(BalancingRecommendation).count()
+        if existing > 0:
+            return {"message": "Рекомендации уже существуют"}
+        
+        recommendations = [
+            BalancingRecommendation(
+                source_node_id=1,
+                target_node_id=2,
+                power_transfer=15.5,
+                command_type="переключение фидера",
+                status="pending",
+                effect_description="Снижение загрузки узла на 12%"
+            ),
+            BalancingRecommendation(
+                source_node_id=2,
+                target_node_id=3,
+                power_transfer=10.2,
+                command_type="регулировка трансформатора",
+                status="pending",
+                effect_description="Балансировка нагрузки"
+            ),
+        ]
+        
+        for r in recommendations:
+            db.add(r)
+        
+        db.commit()
+        return {"message": f"Создано {len(recommendations)} рекомендаций"}
+    finally:
+        db.close()
+
 
 if __name__ == "__main__":
     print("=== Инициализация БД АСБН ===")
@@ -132,6 +170,9 @@ if __name__ == "__main__":
     print(f"✓ {result}")
 
     result = create_test_notifications()
+    print(f"✓ {result}")
+
+    result = create_test_recommendations()
     print(f"✓ {result}")
     
     # Тестовые события

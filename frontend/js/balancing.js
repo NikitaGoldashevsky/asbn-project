@@ -8,7 +8,10 @@ async function loadRecommendations() {
         const data = await api.getRecommendations();
         renderRecommendations(data.recommendations);
     } catch (error) {
-        renderMockRecommendations();
+        console.log('Ошибка загрузки рекомендаций:', error);
+        // Показываем сообщение вместо mock-данных
+        const container = document.getElementById('recommendations-container');
+        container.innerHTML = '<div class="alert alert-info">Нет активных рекомендаций. Система продолжит мониторинг.</div>';
     }
 }
 
@@ -43,29 +46,6 @@ function renderRecommendations(recommendations) {
             </div>
         </div>
     `).join('');
-}
-
-function renderMockRecommendations() {
-    const container = document.getElementById('recommendations-container');
-    container.innerHTML = `
-        <div class="recommendation-card">
-            <div style="display: flex; justify-content: space-between;">
-                <strong>Рекомендация #1</strong>
-                <span class="status-warning">Ожидает подтверждения</span>
-            </div>
-            <div style="margin: 10px 0;">
-                <p><strong>Источник:</strong> ПС-1 Северная</p>
-                <p><strong>Цель:</strong> ПС-2 Центральная</p>
-                <p><strong>Мощность:</strong> 15.5 МВт</p>
-                <p><strong>Тип:</strong> Переключение фидера</p>
-                <p><strong>Эффект:</strong> Снижение загрузки узла на 12%</p>
-            </div>
-            <div class="action-buttons">
-                <button class="btn btn-success" onclick="confirmRecommendation(1)">✓ Подтвердить</button>
-                <button class="btn btn-danger" onclick="rejectRecommendation(1)">✗ Отклонить</button>
-            </div>
-        </div>
-    `;
 }
 
 async function confirmRecommendation(id) {

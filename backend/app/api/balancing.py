@@ -19,10 +19,6 @@ async def get_recommendations(db: Session = Depends(get_db)):
         BalancingRecommendation.status == "pending"
     ).order_by(BalancingRecommendation.created_at.desc()).limit(20).all()
     
-    # Если нет рекомендаций, генерируем тестовые для прототипа
-    if not recommendations:
-        return generate_mock_recommendations(db)
-    
     return {
         "recommendations": [
             {
@@ -40,35 +36,10 @@ async def get_recommendations(db: Session = Depends(get_db)):
         "total": len(recommendations)
     }
 
-
-def generate_mock_recommendations(db: Session):
-    """Генерация тестовых рекомендаций"""
-    nodes = db.query(NetworkNode).limit(5).all()
-    
-    if len(nodes) < 2:
-        return {"recommendations": [], "total": 0, "message": "Недостаточно узлов для балансировки"}
-    
-    return {
-        "recommendations": [
-            {
-                "id": 1,
-                "source_node_id": nodes[0].id if nodes else 1,
-                "target_node_id": nodes[1].id if len(nodes) > 1 else 2,
-                "power_transfer": 15.5,
-                "command_type": "переключение фидера",
-                "status": "pending",
-                "created_at": datetime.utcnow(),
-                "effect_description": "Снижение загрузки узла на 12%"
-            }
-        ],
-        "total": 1
-    }
-
-
 @router.post("/confirm")
 async def confirm_recommendation(
     recommendation_id: int,
-    operator_id: int = 1,  # Для прототипа
+    operator_id: int = 1,
     db: Session = Depends(get_db)
 ):
     """Подтверждение рекомендации диспетчером"""
@@ -83,7 +54,6 @@ async def confirm_recommendation(
     rec.confirmed_by = operator_id
     rec.executed_at = datetime.utcnow()
     
-    # Логируем команду
     command = CommandLog(
         command_type=rec.command_type,
         parameters={"source": rec.source_node_id, "target": rec.target_node_id, "power": rec.power_transfer},
