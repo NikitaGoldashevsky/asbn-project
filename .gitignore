@@ -11,6 +11,9 @@ ENV/
 *.egg-info/
 dist/
 build/
+*.pyc
+.env
+venv/
 
 # IDE
 .vscode/
@@ -42,3 +45,7 @@ exports/
 *.csv
 *.pdf
 config.local.yaml
+
+# Conda
+conda-meta/
+*.conda
