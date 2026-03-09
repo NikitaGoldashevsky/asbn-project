@@ -1,0 +1,51 @@
+# Конфигурация АСБН
+# Разработчик: Голдашевский Н.С., гр. 4331
+
+app:
+  name: "АСБН - Автоматизированная Система Балансировки Нагрузок"
+  version: "1.0.0"
+  debug: true
+
+database:
+  # Для прототипа используем SQLite
+  url: "sqlite:///./database/asbn.db"
+  # Для продакшена:
+  # url: "postgresql://user:password@localhost:5432/asbn"
+  echo: false
+
+security:
+  jwt_secret_key: "asbn-secret-key-change-in-production-2025"
+  jwt_algorithm: "HS256"
+  access_token_expire_minutes: 30
+  password_hash_rounds: 12
+
+thresholds:
+  warning_load_percent: 85
+  emergency_load_percent: 95
+  voltage_deviation_percent: 5
+  frequency_min: 49.0
+  frequency_max: 51.0
+
+forecast:
+  horizon_hours: 24
+  interval_minutes: 15
+  retrain_interval_hours: 24
+  min_historical_days: 30
+
+notifications:
+  channels:
+    - interface
+    - email
+    - sms
+  aggregation_enabled: true
+  aggregation_interval_minutes: 5
+
+logging:
+  level: "INFO"
+  file: "logs/system.log"
+  max_size_mb: 100
+  backup_count: 5
+
+server:
+  host: "127.0.0.1"
+  port: 8000
