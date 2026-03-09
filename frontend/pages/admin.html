@@ -15,7 +15,7 @@
                 <a href="forecast.html">Прогноз</a>
                 <a href="balancing.html">Балансировка</a>
                 <a href="notifications.html">Уведомления</a>
-                <a href="reports.html">\nОтчёты</a>
+                <a href="reports.html">Отчёты</a>
                 <a href="admin.html" class="admin-only">Админ</a>
                 <span id="user-name"></span>
                 <a href="#" onclick="logout()">Выход</a>
@@ -124,6 +124,48 @@
             <div style="display: flex; gap: 10px;">
                 <button class="btn btn-primary" onclick="createUser()">Создать</button>
                 <button class="btn btn-danger" onclick="closeCreateUser()">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно редактирования пользователя -->
+    <div id="edit-user-modal" class="hidden" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center;">
+        <div class="card" style="width: 400px; max-width: 90%;">
+            <div class="card-header">Редактирование пользователя</div>
+            
+            <div class="form-group">
+                <label>Логин</label>
+                <input type="text" id="edit-login" class="form-control">
+            </div>
+            
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="edit-email" class="form-control">
+            </div>
+            
+            <div class="form-group">
+                <label>Пароль (оставьте пустым чтобы не менять)</label>
+                <input type="password" id="edit-password" class="form-control" placeholder="Новый пароль">
+            </div>
+            
+            <div class="form-group">
+                <label>Роль</label>
+                <select id="edit-role" class="form-control">
+                    <option value="analyst">Аналитик</option>
+                    <option value="dispatcher">Диспетчер</option>
+                    <option value="admin">Администратор</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="edit-active"> Активен
+                </label>
+            </div>
+            
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-primary" onclick="saveUserEdit()">Сохранить</button>
+                <button class="btn btn-danger" onclick="closeEditUser()">Отмена</button>
             </div>
         </div>
     </div>

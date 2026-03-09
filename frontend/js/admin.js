@@ -1,7 +1,9 @@
 /**
- * АСБН - Логика админ-панели
+ * АСБН - Логика админ-панели (ИСПРАВЛЕННАЯ ВЕРСИЯ)
  * Разработчик: Голдашевский Н.С., гр. 4331
  */
+
+let currentUserEdit = null;
 
 async function loadAdminData() {
     loadUsers();
@@ -39,7 +41,7 @@ function renderUsers(users) {
             <td>${u.role}</td>
             <td><span class="status-${u.is_active ? 'norma' : 'overload'}">${u.is_active ? 'Активен' : 'Заблокирован'}</span></td>
             <td>
-                <button class="btn btn-warning" onclick="editUser(${u.id})">✏️</button>
+                <button class="btn btn-warning" onclick="editUser(${u.id}, '${u.login}', '${u.email}', '${u.role}', ${u.is_active})">✏️</button>
                 <button class="btn btn-danger" onclick="deleteUser(${u.id})">🗑️</button>
             </td>
         </tr>
@@ -55,8 +57,8 @@ function renderMockUsers() {
             <td>admin</td>
             <td><span class="status-norma">Активен</span></td>
             <td>
-                <button class="btn btn-warning">✏️</button>
-                <button class="btn btn-danger">🗑️</button>
+                <button class="btn btn-warning" onclick="editUser(1, 'admin', 'admin@asbn.local', 'admin', true)">✏️</button>
+                <button class="btn btn-danger" onclick="deleteUser(1)">🗑️</button>
             </td>
         </tr>
         <tr>
@@ -65,8 +67,8 @@ function renderMockUsers() {
             <td>dispatcher</td>
             <td><span class="status-norma">Активен</span></td>
             <td>
-                <button class="btn btn-warning">✏️</button>
-                <button class="btn btn-danger">🗑️</button>
+                <button class="btn btn-warning" onclick="editUser(2, 'dispatcher1', 'disp@asbn.local', 'dispatcher', true)">✏️</button>
+                <button class="btn btn-danger" onclick="deleteUser(2)">🗑️</button>
             </td>
         </tr>
         <tr>
@@ -75,11 +77,146 @@ function renderMockUsers() {
             <td>analyst</td>
             <td><span class="status-norma">Активен</span></td>
             <td>
-                <button class="btn btn-warning">✏️</button>
-                <button class="btn btn-danger">🗑️</button>
+                <button class="btn btn-warning" onclick="editUser(3, 'analyst1', 'anal@asbn.local', 'analyst', true)">✏️</button>
+                <button class="btn btn-danger" onclick="deleteUser(3)">🗑️</button>
             </td>
         </tr>
     `;
+}
+
+async function createUser() {
+    const login = document.getElementById('new-login').value.trim();
+    const email = document.getElementById('new-email').value.trim();
+    const password = document.getElementById('new-password').value.trim();
+    const role = document.getElementById('new-role').value;
+    
+    if (!login || !email || !password) {
+        alert('Заполните все поля!');
+        return;
+    }
+    
+    try {
+        const response = await fetch('http://127.0.0.1:8000/api/admin/users', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${api.getToken()}`
+            },
+            body: JSON.stringify({
+                login: login,
+                password: password,
+                email: email,
+                role: role
+            })
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Ошибка создания');
+        }
+        
+        alert(`Пользователь "${login}" успешно создан!`);
+        closeCreateUser();
+        loadUsers();
+        
+    } catch (error) {
+        console.error('Ошибка:', error);
+        alert('❌ Ошибка: ' + error.message + '\n\nПроверьте что backend запущен (python run.py)');
+    }
+}
+
+async function editUser(id, login, email, role, isActive) {
+    currentUserEdit = { id, login, email, role, isActive };
+    
+    // Заполняем модальное окно текущими данными
+    document.getElementById('edit-login').value = login;
+    document.getElementById('edit-email').value = email;
+    document.getElementById('edit-role').value = role;
+    document.getElementById('edit-active').checked = isActive;
+    document.getElementById('edit-password').value = ''; // Пароль не показываем
+    
+    // Показываем модальное окно редактирования
+    document.getElementById('edit-user-modal').classList.remove('hidden');
+    document.getElementById('edit-user-modal').style.display = 'flex';
+}
+
+async function saveUserEdit() {
+    const login = document.getElementById('edit-login').value.trim();
+    const email = document.getElementById('edit-email').value.trim();
+    const role = document.getElementById('edit-role').value;
+    const password = document.getElementById('edit-password').value.trim();
+    const isActive = document.getElementById('edit-active').checked;
+    
+    if (!login || !email) {
+        alert('Заполните логин и email!');
+        return;
+    }
+    
+    try {
+        const body = {
+            login: login,
+            email: email,
+            role: role,
+            is_active: isActive
+        };
+        
+        // Добавляем пароль только если он введён
+        if (password && password.length > 0) {
+            body.password = password;
+        }
+        
+        const response = await fetch(`http://127.0.0.1:8000/api/admin/users/${currentUserEdit.id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${api.getToken()}`
+            },
+            body: JSON.stringify(body)
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Ошибка обновления');
+        }
+        
+        alert(`Пользователь "${login}" обновлён!`);
+        closeEditUser();
+        loadUsers();
+        
+    } catch (error) {
+        console.error('Ошибка:', error);
+        alert('Ошибка: ' + error.message);
+    }
+}
+
+function closeEditUser() {
+    document.getElementById('edit-user-modal').classList.add('hidden');
+    document.getElementById('edit-user-modal').style.display = 'none';
+    currentUserEdit = null;
+}
+
+async function deleteUser(id) {
+    if (confirm('Вы уверены что хотите удалить пользователя?')) {
+        try {
+            const response = await fetch(`http://127.0.0.1:8000/api/admin/users/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${api.getToken()}`
+                }
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Ошибка удаления');
+            }
+            
+            alert('Пользователь удалён');
+            loadUsers();
+        } catch (error) {
+            console.error('Ошибка:', error);
+            alert('Ошибка: ' + error.message);
+        }
+    }
 }
 
 async function loadSystemStatus() {
@@ -174,64 +311,6 @@ function showCreateUser() {
 function closeCreateUser() {
     document.getElementById('create-user-modal').classList.add('hidden');
     document.getElementById('create-user-modal').style.display = 'none';
-}
-
-async function createUser() {
-    const login = document.getElementById('new-login').value.trim();
-    const email = document.getElementById('new-email').value.trim();
-    const password = document.getElementById('new-password').value.trim();
-    const role = document.getElementById('new-role').value;
-    
-    if (!login || !email || !password) {
-        alert('⚠️ Заполните все поля!');
-        return;
-    }
-    
-    try {
-        const response = await fetch('http://127.0.0.1:8000/api/admin/users', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${api.getToken()}`
-            },
-            body: JSON.stringify({
-                login: login,
-                password: password,
-                email: email,
-                role: role
-            })
-        });
-        
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || 'Ошибка создания');
-        }
-        
-        alert(`Пользователь "${login}" успешно создан!`);
-        closeCreateUser();
-        loadUsers();  // Обновляем список
-        
-    } catch (error) {
-        console.error('Ошибка:', error);
-        alert('Ошибка: ' + error.message + '\n\nПроверьте что backend запущен (python run.py)');
-    }
-}
-
-async function deleteUser(id) {
-    if (confirm('Вы уверены что хотите удалить пользователя?')) {
-        try {
-            await api.request(`/admin/users/${id}`, { method: 'DELETE' });
-            alert('Пользователь удалён');
-            loadUsers();
-        } catch (error) {
-            alert('API недоступно (прототип)');
-            loadUsers();
-        }
-    }
-}
-
-function editUser(id) {
-    alert('Редактирование пользователя #' + id + '\n(Функция в разработке)');
 }
 
 async function saveThresholds() {

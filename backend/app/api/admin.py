@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from backend.app.database import get_db
 from backend.app.models import User, SystemEvent, CommandLog
 from backend.app.core.security import get_password_hash
-from typing import List
+from typing import List, Optional
 
 router = APIRouter()
 
@@ -34,7 +34,6 @@ async def get_users(db: Session = Depends(get_db)):
 
 
 @router.post("/users")
-@router.post("/users")
 async def create_user(
     login: str = Body(...),
     password: str = Body(...),
@@ -55,9 +54,56 @@ async def create_user(
     )
     db.add(new_user)
     db.commit()
-    db.refresh(new_user)  # ← Добавьте это
+    db.refresh(new_user)
     
     return {"message": "Пользователь создан", "id": new_user.id, "login": new_user.login}
+
+
+@router.put("/users/{user_id}")
+async def update_user(
+    user_id: int,
+    login: Optional[str] = Body(None),
+    email: Optional[str] = Body(None),
+    role: Optional[str] = Body(None),
+    password: Optional[str] = Body(None),
+    is_active: Optional[bool] = Body(None),
+    db: Session = Depends(get_db)
+):
+    """Редактирование пользователя (админ)"""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+    
+    # Обновляем только переданные поля
+    if login is not None:
+        # Проверка уникальности логина
+        existing = db.query(User).filter(User.login == login, User.id != user_id).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Такой логин уже занят")
+        user.login = login
+    
+    if email is not None:
+        user.email = email
+    
+    if role is not None:
+        user.role = role
+    
+    if password is not None and len(password) > 0:
+        user.password_hash = get_password_hash(password)
+    
+    if is_active is not None:
+        user.is_active = is_active
+    
+    db.commit()
+    db.refresh(user)
+    
+    return {
+        "message": "Пользователь обновлён",
+        "id": user.id,
+        "login": user.login,
+        "email": user.email,
+        "role": user.role
+    }
 
 
 @router.delete("/users/{user_id}")
@@ -66,6 +112,10 @@ async def delete_user(user_id: int, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
+    
+    # Нельзя удалить самого себя
+    if user.login == "admin":
+        raise HTTPException(status_code=400, detail="Нельзя удалить главного администратора")
     
     db.delete(user)
     db.commit()
