@@ -2,7 +2,7 @@
 API администрирования системы
 Разработчик: Голдашевский Н.С., гр. 4331
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Body 
 from sqlalchemy.orm import Session
 from backend.app.database import get_db
 from backend.app.models import User, SystemEvent, CommandLog
@@ -34,11 +34,12 @@ async def get_users(db: Session = Depends(get_db)):
 
 
 @router.post("/users")
+@router.post("/users")
 async def create_user(
-    login: str,
-    password: str,
-    email: str,
-    role: str = "analyst",
+    login: str = Body(...),
+    password: str = Body(...),
+    email: str = Body(...),
+    role: str = Body(default="analyst"),
     db: Session = Depends(get_db)
 ):
     """Создание пользователя (админ)"""
@@ -54,8 +55,9 @@ async def create_user(
     )
     db.add(new_user)
     db.commit()
+    db.refresh(new_user)  # ← Добавьте это
     
-    return {"message": "Пользователь создан", "id": new_user.id}
+    return {"message": "Пользователь создан", "id": new_user.id, "login": new_user.login}
 
 
 @router.delete("/users/{user_id}")

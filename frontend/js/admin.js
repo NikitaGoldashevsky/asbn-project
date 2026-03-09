@@ -11,10 +11,15 @@ async function loadAdminData() {
 }
 
 async function loadUsers() {
+    const tbody = document.querySelector('#users-table tbody');
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center">Загрузка...</td></tr>';
+    
     try {
         const data = await api.getUsers();
+        console.log('Пользователи получены:', data.users);
         renderUsers(data.users);
     } catch (error) {
+        console.log('API недоступно, используем тестовые данные');
         renderMockUsers();
     }
 }
@@ -163,75 +168,70 @@ async function loadSystemLogs() {
 
 function showCreateUser() {
     document.getElementById('create-user-modal').classList.remove('hidden');
+    document.getElementById('create-user-modal').style.display = 'flex';
 }
 
 function closeCreateUser() {
-    const modal = document.getElementById('create-user-modal');
-    modal.classList.add('hidden');
-    console.log('CreateUser modal closed');
+    document.getElementById('create-user-modal').classList.add('hidden');
+    document.getElementById('create-user-modal').style.display = 'none';
 }
 
 async function createUser() {
-    const login = document.getElementById('new-login').value;
-    const email = document.getElementById('new-email').value;
-    const password = document.getElementById('new-password').value;
+    const login = document.getElementById('new-login').value.trim();
+    const email = document.getElementById('new-email').value.trim();
+    const password = document.getElementById('new-password').value.trim();
     const role = document.getElementById('new-role').value;
     
-    // === ВАЛИДАЦИЯ ЛОГИНА (по ТЗ 4.2.2.2) ===
-    const loginRegex = /^[a-zA-Z0-9]{4,20}$/;
-    if (!loginRegex.test(login)) {
-        alert('Логин должен содержать 4-20 символов (латиница и цифры)');
-        return;
-    }
-    
-    // === ВАЛИДАЦИЯ EMAIL ===
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        alert('Некорректный формат email (пример: user@domain.com)');
-        return;
-    }
-    
-    if (email.length > 50) {
-        alert('Email должен быть не более 50 символов');
-        return;
-    }
-    
-    // === ВАЛИДАЦИЯ ПАРОЛЯ (по ТЗ 4.2.2.2) ===
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,32}$/;
-    if (!passwordRegex.test(password)) {
-        alert('Пароль должен содержать 8-32 символа, включая:\n• Заглавную букву\n• Строчную букву\n• Цифру\n• Спецсимвол (!@#$%^&*)');
+    if (!login || !email || !password) {
+        alert('⚠️ Заполните все поля!');
         return;
     }
     
     try {
-        // Отправка на сервер
-        // await api.request('/admin/users', {
-        //     method: 'POST',
-        //     body: JSON.stringify({ login, password, email, role })
-        // });
+        const response = await fetch('http://127.0.0.1:8000/api/admin/users', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${api.getToken()}`
+            },
+            body: JSON.stringify({
+                login: login,
+                password: password,
+                email: email,
+                role: role
+            })
+        });
         
-        alert(`Пользователь ${login} успешно создан!`);
-        closeCreateUser();  // ← Закрываем модальное окно
-        loadUsers();
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Ошибка создания');
+        }
+        
+        alert(`Пользователь "${login}" успешно создан!`);
+        closeCreateUser();
+        loadUsers();  // Обновляем список
+        
     } catch (error) {
-        alert('Ошибка: ' + error.message);
+        console.error('Ошибка:', error);
+        alert('Ошибка: ' + error.message + '\n\nПроверьте что backend запущен (python run.py)');
     }
 }
 
 async function deleteUser(id) {
-    if (confirm('Удалить пользователя?')) {
+    if (confirm('Вы уверены что хотите удалить пользователя?')) {
         try {
             await api.request(`/admin/users/${id}`, { method: 'DELETE' });
+            alert('Пользователь удалён');
             loadUsers();
         } catch (error) {
-            alert('Пользователь удалён (прототип)');
+            alert('API недоступно (прототип)');
             loadUsers();
         }
     }
 }
 
 function editUser(id) {
-    alert('Редактирование пользователя #' + id);
+    alert('Редактирование пользователя #' + id + '\n(Функция в разработке)');
 }
 
 async function saveThresholds() {
