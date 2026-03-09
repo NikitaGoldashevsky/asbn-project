@@ -14,6 +14,10 @@ import logging
 import asyncio
 from datetime import datetime, timedelta
 import random
+import sys
+import io
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+
 
 # Настройка логирования
 logging.basicConfig(

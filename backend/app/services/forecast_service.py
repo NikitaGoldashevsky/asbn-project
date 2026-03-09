@@ -26,7 +26,8 @@ class ForecastService:
         features = []
         for ts in timestamps:
             hour = ts.hour
-            day_of_week = ts.dayofweek
+            # ИСПРАВЛЕНО: weekday() вместо dayofweek для datetime.datetime
+            day_of_week = ts.weekday()
             is_weekend = 1 if day_of_week >= 5 else 0
             features.append([hour, day_of_week, is_weekend])
         return np.array(features)

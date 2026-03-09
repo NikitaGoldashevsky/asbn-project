@@ -99,10 +99,17 @@ class ApiClient {
         return await this.request(`/forecast/node/${nodeId}`);
     }
 
+    async getForecastQuality() {
+        return await this.request('/forecast/quality');
+    }
+
     async calculateForecast(nodeId, horizonHours = 24) {
         return await this.request('/forecast/calculate', {
             method: 'POST',
-            body: JSON.stringify({ node_id: nodeId, horizon_hours: horizonHours })
+            body: JSON.stringify({ 
+                node_id: nodeId, 
+                horizon_hours: horizonHours 
+            })
         });
     }
 
