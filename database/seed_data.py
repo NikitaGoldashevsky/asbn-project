@@ -56,6 +56,56 @@ def create_test_users():
     finally:
         db.close()
 
+def create_test_notifications():
+    """Создание тестовых уведомлений"""
+    from backend.app.models import Notification
+    from datetime import datetime, timedelta
+    
+    db = SessionLocal()
+    try:
+        existing = db.query(Notification).count()
+        if existing > 0:
+            return {"message": "Уведомления уже существуют"}
+        
+        notifications = [
+            Notification(
+                user_id=1,
+                type="alert",
+                message="Перегрузка узла ПС-2 Центральная: 97%",
+                channel="interface",
+                status="sent",
+                created_at=datetime.utcnow() - timedelta(minutes=5),
+                is_read=False
+            ),
+            Notification(
+                user_id=1,
+                type="warning",
+                message="Прогнозируемая перегрузка: ПС-3 Южная",
+                channel="interface",
+                status="sent",
+                created_at=datetime.utcnow() - timedelta(minutes=30),
+                is_read=False
+            ),
+            Notification(
+                user_id=1,
+                type="info",
+                message="Рекомендация #1 подтверждена",
+                channel="interface",
+                status="delivered",
+                created_at=datetime.utcnow() - timedelta(hours=2),
+                is_read=True
+            ),
+        ]
+        
+        for n in notifications:
+            db.add(n)
+        
+        db.commit()
+        return {"message": f"Создано {len(notifications)} уведомлений"}
+    finally:
+        db.close()
+        
+
 if __name__ == "__main__":
     print("=== Инициализация БД АСБН ===")
     print("Разработчик: Голдашевский Н.С., гр. 4331\n")
@@ -79,6 +129,9 @@ if __name__ == "__main__":
     print(f"✓ {result}")
     
     result = create_test_users()
+    print(f"✓ {result}")
+
+    result = create_test_notifications()
     print(f"✓ {result}")
     
     # Тестовые события
