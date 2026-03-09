@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>АСБН - Уведомления</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .notification-item {
+            padding: 15px;
+            border-left: 4px solid #4299e1;
+            margin-bottom: 10px;
+            background: white;
+            border-radius: 4px;
+        }
+        .notification-item.info { border-left-color: #4299e1; }
+        .notification-item.warning { border-left-color: #ecc94b; }
+        .notification-item.alert { border-left-color: #f56565; }
+        .notification-item.read { opacity: 0.6; }
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .notification-time {
+            font-size: 12px;
+            color: #718096;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container navbar-content">
+            <div class="navbar-brand">АСБН | Уведомления</div>
+            <div class="navbar-menu" id="user-navbar">
+                <a href="monitoring.html">Мониторинг</a>
+                <a href="forecast.html">Прогноз</a>
+                <a href="balancing.html">Балансировка</a>
+                <a href="notifications.html">Уведомления</a>
+                <a href="reports.html">Отчёты</a>
+                <a href="admin.html" class="admin-only">Админ</a>
+                <span id="user-name"></span>
+                <a href="#" onclick="logout()">Выход</a>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container mt-2">
+        <div class="card">
+            <div class="card-header">🔔 Журнал уведомлений и событий</div>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <button class="btn btn-primary" onclick="loadNotifications()">Обновить</button>
+                <button class="btn btn-success" onclick="markAllRead()">Отметить все как прочитанные</button>
+                <select id="filter-type" class="form-control" style="width: 200px;" onchange="loadNotifications()">
+                    <option value="all">Все типы</option>
+                    <option value="info">Информационные</option>
+                    <option value="warning">Предупреждения</option>
+                    <option value="alert">Аварийные</option>
+                </select>
+            </div>
+            
+            <div id="notifications-container">
+                <!-- Уведомления будут загружены через JS -->
+            </div>
+        </div>
+        
+        <div class="card mt-2">
+            <div class="card-header">⚙️ Правила уведомлений</div>
+            <table class="table" id="rules-table">
+                <thead>
+                    <tr>
+                        <th>Событие</th>
+                        <th>Порог</th>
+                        <th>Каналы</th>
+                        <th>Получатели</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Перегрузка узла</td>
+                        <td>> 95%</td>
+                        <td>Интерфейс, Email, SMS</td>
+                        <td>Диспетчер, Админ</td>
+                    </tr>
+                    <tr>
+                        <td>Предупреждение</td>
+                        <td>> 85%</td>
+                        <td>Интерфейс</td>
+                        <td>Диспетчер, Аналитик</td>
+                    </tr>
+                    <tr>
+                        <td>Аварийное отключение</td>
+                        <td>-</td>
+                        <td>Интерфейс, Email, SMS</td>
+                        <td>Все</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/notifications.js"></script>
+    <script>
+        if (!checkAuth()) window.location.href = '../login.html';
+        initNavbar();
+        loadNotifications();
+    </script>
+</body>
+</html>
