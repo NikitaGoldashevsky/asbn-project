@@ -166,7 +166,9 @@ function showCreateUser() {
 }
 
 function closeCreateUser() {
-    document.getElementById('create-user-modal').classList.add('hidden');
+    const modal = document.getElementById('create-user-modal');
+    modal.classList.add('hidden');
+    console.log('CreateUser modal closed');
 }
 
 async function createUser() {
@@ -175,15 +177,41 @@ async function createUser() {
     const password = document.getElementById('new-password').value;
     const role = document.getElementById('new-role').value;
     
-    if (!login || !email || !password) {
-        alert('Заполните все поля');
+    // === ВАЛИДАЦИЯ ЛОГИНА (по ТЗ 4.2.2.2) ===
+    const loginRegex = /^[a-zA-Z0-9]{4,20}$/;
+    if (!loginRegex.test(login)) {
+        alert('Логин должен содержать 4-20 символов (латиница и цифры)');
+        return;
+    }
+    
+    // === ВАЛИДАЦИЯ EMAIL ===
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        alert('Некорректный формат email (пример: user@domain.com)');
+        return;
+    }
+    
+    if (email.length > 50) {
+        alert('Email должен быть не более 50 символов');
+        return;
+    }
+    
+    // === ВАЛИДАЦИЯ ПАРОЛЯ (по ТЗ 4.2.2.2) ===
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,32}$/;
+    if (!passwordRegex.test(password)) {
+        alert('Пароль должен содержать 8-32 символа, включая:\n• Заглавную букву\n• Строчную букву\n• Цифру\n• Спецсимвол (!@#$%^&*)');
         return;
     }
     
     try {
-        // В прототипе просто показываем успех
-        alert(`Пользователь ${login} создан`);
-        closeCreateUser();
+        // Отправка на сервер
+        // await api.request('/admin/users', {
+        //     method: 'POST',
+        //     body: JSON.stringify({ login, password, email, role })
+        // });
+        
+        alert(`Пользователь ${login} успешно создан!`);
+        closeCreateUser();  // ← Закрываем модальное окно
         loadUsers();
     } catch (error) {
         alert('Ошибка: ' + error.message);
