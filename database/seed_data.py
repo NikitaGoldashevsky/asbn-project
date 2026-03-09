@@ -6,10 +6,12 @@ import sys
 sys.path.append('.')
 
 from backend.app.database import engine, Base, SessionLocal
-from backend.app.models import User
+from backend.app.models import User, Measurement
 from backend.app.core.security import get_password_hash
 from backend.simulator.network_topology import NetworkTopology
 from backend.simulator.data_generator import DataGenerator
+from datetime import datetime, timedelta
+import random
 
 def create_admin_user():
     """Создание администратора по умолчанию"""
@@ -143,6 +145,57 @@ def create_test_recommendations():
     finally:
         db.close()
 
+def create_historical_measurements():
+    """
+    Создание исторических измерений для обучения модели прогноза
+    ТЗ 4.3.1.2: не менее 30 суток измерений для каждого узла
+    """
+    db = SessionLocal()
+    try:
+        from backend.app.models import NetworkNode
+        nodes = db.query(NetworkNode).all()
+        
+        total = 0
+        for node in nodes:
+            # Проверяем есть ли уже данные
+            existing = db.query(Measurement).filter(
+                Measurement.node_id == node.id
+            ).count()
+            
+            if existing > 100:
+                continue
+            
+            # Генерируем 30 суток * 96 интервалов = 2880 измерений
+            now = datetime.utcnow()
+            base_power = node.nominal_power or 50.0
+            
+            for i in range(2880):
+                timestamp = now - timedelta(minutes=15 * (2880 - i))
+                hour = timestamp.hour
+                
+                # Суточный цикл нагрузки
+                hour_factor = 0.6 + 0.4 * (1 - ((hour - 14) ** 2) / 144)
+                power = base_power * hour_factor * random.uniform(0.9, 1.1)
+                
+                measurement = Measurement(
+                    node_id=node.id,
+                    timestamp=timestamp,
+                    current=random.uniform(150, 250),
+                    voltage=random.uniform(108, 112),
+                    active_power=power,
+                    reactive_power=power * 0.3,
+                    frequency=random.uniform(49.9, 50.1),
+                    power_factor=random.uniform(0.9, 0.95),
+                    is_valid=True
+                )
+                db.add(measurement)
+                total += 1
+        
+        db.commit()
+        return {"message": f"Создано {total} исторических измерений (30 суток)"}
+    finally:
+        db.close()
+
 
 if __name__ == "__main__":
     print("=== Инициализация БД АСБН ===")
@@ -157,9 +210,13 @@ if __name__ == "__main__":
     result = topo.seed_topology()
     print(f"✓ {result}")
     
-    # Измерения
+    # Измерения (последние 20)
     gen = DataGenerator()
     result = gen.seed_measurements(count_per_node=20)
+    print(f"✓ {result}")
+    
+    # Исторические данные для обучения модели (30 суток)
+    result = create_historical_measurements()
     print(f"✓ {result}")
     
     # Пользователи
@@ -185,3 +242,5 @@ if __name__ == "__main__":
     print("  admin / Admin123!")
     print("  dispatcher1 / Disp123!")
     print("  analyst1 / Anal123!")
+    print("\nДанные для обучения модели прогноза:")
+    print("  30 суток измерений (2880 записей на узел)")

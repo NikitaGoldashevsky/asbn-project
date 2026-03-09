@@ -7,11 +7,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.app.database import engine, Base, SessionLocal
 from backend.app.api import auth, monitoring, forecast, balancing, notifications, reports, admin
-from backend.app.models import BalancingRecommendation, NetworkNode
+from backend.app.models import BalancingRecommendation, NetworkNode, Measurement
+from backend.app.services.forecast_service import forecast_service
 from backend.app.core.config import config
 import logging
 import asyncio
-from datetime import datetime
+from datetime import datetime, timedelta
 import random
 
 # Настройка логирования
@@ -54,28 +55,23 @@ app.include_router(reports.router, prefix="/api/reports", tags=["Отчёты"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Администрирование"])
 
 
-# === ФОНОВАЯ ЗАДАЧА: генерация рекомендаций ===
+# === ФОНОВАЯ ЗАДАЧА 1: Генерация рекомендаций ===
 async def generate_recommendations_task():
-    """Фоновая задача: создание рекомендаций каждые 10 секунд (макс. 2 в очереди)"""
+    """Создание рекомендаций каждые 10 секунд (макс. 2 в очереди)"""
     while True:
         try:
             await asyncio.sleep(10)
-            
             db = SessionLocal()
             try:
-                # Считаем pending рекомендации
                 pending_count = db.query(BalancingRecommendation).filter(
                     BalancingRecommendation.status == "pending"
                 ).count()
                 
-                # Если меньше или равно 2 - создаём новую
                 if pending_count <= 2:
                     nodes = db.query(NetworkNode).limit(5).all()
-                    
                     if len(nodes) >= 2:
                         source = random.choice(nodes)
                         target = random.choice([n for n in nodes if n.id != source.id])
-                        
                         if target:
                             recommendation = BalancingRecommendation(
                                 source_node_id=source.id,
@@ -91,13 +87,36 @@ async def generate_recommendations_task():
                             )
                             db.add(recommendation)
                             db.commit()
-                            
-                            logger.info(f"Создана рекомендация #{recommendation.id}: {source.name} → {target.name}")
+                            logger.info(f"Рекомендация #{recommendation.id}: {source.name} → {target.name}")
             finally:
                 db.close()
-                
         except Exception as e:
-            logger.error(f"Ошибка в задаче генерации рекомендаций: {e}")
+            logger.error(f"Ошибка генерации рекомендаций: {e}")
+
+
+# === ФОНОВАЯ ЗАДАЧА 2: Пересчёт прогноза каждые 15 минут ===
+async def recalculate_forecasts_task():
+    """Автоматический пересчёт прогнозов каждые 15 минут (ТЗ 4.2.3)"""
+    while True:
+        try:
+            await asyncio.sleep(900)  # 15 минут
+            db = SessionLocal()
+            try:
+                nodes = db.query(NetworkNode).limit(5).all()
+                for node in nodes:
+                    measurements = db.query(Measurement).filter(
+                        Measurement.node_id == node.id
+                    ).order_by(Measurement.timestamp.desc()).limit(3000).all()
+                    
+                    if len(measurements) >= 100:
+                        timestamps = [m.timestamp for m in measurements]
+                        loads = [m.active_power or 50.0 for m in measurements]
+                        forecast_service.train_model(node.id, loads, timestamps)
+                        logger.info(f"Прогноз обновлён для узла {node.name}")
+            finally:
+                db.close()
+        except Exception as e:
+            logger.error(f"Ошибка пересчёта прогноза: {e}")
 
 
 @app.get("/")
@@ -118,9 +137,11 @@ async def health_check():
 
 @app.on_event("startup")
 async def startup_event():
-    """Запуск фоновых задач при старте приложения"""
-    logger.info("Запуск фоновой задачи генерации рекомендаций...")
+    """Запуск фоновых задач при старте (ТЗ 4.2.1)"""
+    logger.info("Запуск фоновых задач...")
     asyncio.create_task(generate_recommendations_task())
+    asyncio.create_task(recalculate_forecasts_task())
+    logger.info("Фоновые задачи запущены")
 
 
 if __name__ == "__main__":
